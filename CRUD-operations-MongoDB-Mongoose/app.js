@@ -1,5 +1,6 @@
 // const { MongoClient } = require("mongodb");
-
+const assert = require('assert');
+// we're importing the assert function from the Node.js assert module and assigning it to a variable called assert.
 // // const assert = require('assert');
 // // Replace the uri string with your connection string.
 // const uri = "mongodb://localhost:27017";// run mongod in terminal to get connection to this port and then run mongo in another terminal to see various dbs you created using show dbs
@@ -154,10 +155,199 @@
 
 const mongoose = require('mongoose');
 
-mongoose.connect("mongodb://localhost:27017/sample_airbnb")//it will co to locannectlhost having port 27017 and then search for sample_airbnb db and if it will not find one it will create one
+mongoose.connect("mongodb://localhost:27017/sample_airbnb")//it will connect to local host having port 27017 and then search for sample_airbnb db and if it will not find one it will create one
+
+// Inserting
+const listingSchema = new mongoose.Schema({
+  
+    name:String,
+    summary:String,
+    propertyType:String,
+    bedrooms:Number,
+    bathrooms:Number,
+    beds:Number,
+    lastReview: Date
+
+});
+
+const Listing = mongoose.model("Listing", listingSchema); // First create Listing model using ListingSchema
+
+const listing_1 = new Listing({      // Create new listing object
+    name: "Beautiful Beach House",
+    summary: "Enjoy relaxed beach living in this house with a private beach",
+    propertyType:"Beach House",
+    bedrooms: 4,
+    bathrooms: 2.5,
+    beds: 7,
+    lastReview: new Date()
+});
+
+//listing_1.save();
+
+const breakfastSchema =  mongoose.Schema({
+    eggs: {
+      type: Number,
+      min: [1, 'Too few eggs'],
+      max: 6
+    },
+    bacon: {
+      type: Number,
+    //   required: [true, 'Why no bacon?']
+    },
+    drink: {
+      type: String,
+    //   enum: ['Coffee', 'Tea'],
+      required: function() {
+        return this.bacon > 3;
+      }
+    }
+  });
+  const Breakfast = mongoose.model('Breakfast', breakfastSchema);
+
+const personSchema = new mongoose.Schema({
+    name:String,
+    age:Number,
+    favouriteBreakfast:breakfastSchema
+
+});
+
+const Person = mongoose.model("Person",personSchema)
+
+const person_1 = new Person({
+    name:"John",
+    age:21
+})
+
+// person_1.save();
+
+const person_2 = new Person({
+    name:"Peter",
+    age:38
+})
+const person_3 = new Person({
+    name:"Tom",
+    age:13
+})
+
+// This has become deprecated now, Model.insertMany() no longer accepts a callback
+
+// Person.insertMany([person_2, person_3],function(err){
+// // function(err) passed to check if there is any error pushing the data to Person model
+//     if(err){
+//         console.log(err);
+//     } else {
+//        console.log("successful");
+//     }
+// });
+
+//New syntax
+
+// Person.insertMany([person_2, person_3])
+//   .then((result) => {
+//     console.log(result); // array of inserted documents
+//   })
+//   .catch((error) => {
+//     console.error(error);
+//   });
+
+// Reading
+// Find all person : MyModel.find({});
+
+// Person.find({Person}).then((result)=>{
+//   console.log(result);
+// }).catch((error)=>{
+//     console.error(error);
+// });
 
 
+// find all documents named Peter and at least 18 years of age
+// console.log("Querying for Peter with age >= 18");
 
+// Person.find({ name: "Peter", age: { $gte: 18 } }).then((result)=>{
+//   console.log(result);
+// }).catch((error)=>{
+//   console.error(error);
+// });
+  
+//Looping over Person
+
+// Person.find({Person}).then((result)=>{// arrow function
+//   //console.log(result);
+    
+//      result.forEach(function(item){
+//         console.log(item.name);
+//   });
+//   mongoose.connection.close();
+// }).catch((error)=>{
+//     console.error(error);
+// });
+
+// DATA VALIDATION USING MONGOOSE
+  
+  const badBreakfast = new Breakfast({
+    eggs: 2,
+    bacon: 0,
+    drink: 'Milk'
+  });
+
+//   badBreakfast.save();
+  
+  let error = badBreakfast.validateSync();
+//   assert.equal(error.errors['drink'].message,
+//     '`Milk` is not a valid enum value for path `drink`.');
+  
+  badBreakfast.eggs = 7;
+
+  badBreakfast.bacon = 1;
+  error = badBreakfast.validateSync();
+  //assert.equal(error.errors['bacon'].message, 'Why no bacon?');
+
+  badBreakfast.drink = null;
+
+  
+  error = badBreakfast.validateSync();
+//   console.log(error);
+  //assert.equal(error.errors['drink'].message, 'Path `drink` is required.');
+  
+  
+// UPDATING AND DELETING DATA WITH MONGOOSE
+
+// UPDATING
+
+// Breakfast.updateOne({_id:"645bbcdad107e2eff527349b"},{drink:"Milk"}).then((result)=>{// first parameter is for identifying the object and second one is being updated
+
+//     console.log(result);
+//   }).catch((error)=>{
+//     console.error(error);
+// });
+
+//DELETING
+
+// Breakfast.deleteOne({_id:"645bbcdad107e2eff527349b"}).then((result)=>{// first parameter is for identifying the object and second one is being updated
+
+//     console.log(result);
+//   }).catch((error)=>{
+//     console.error(error);
+// });
+
+
+// ESTABLISHING RELATIONSHIPS AND EMBEDDING DOCUMENTS USING MONGOOSE
+
+// const goodBreakfast = new Breakfast({
+//     eggs: 2,
+//     bacon: 0,
+//     drink: 'Milk'
+//   });
+
+// goodBreakfast.save();
+
+// const person_4 = new Person({
+//     name:"Ujjwal",
+//     age:21,
+//     favouriteBreakfast:goodBreakfast// embedded one model into another
+// });
+
+// person_4.save();
 
 
 

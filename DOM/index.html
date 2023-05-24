@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My website</title>
+    <link rel="stylesheet" href="styles.css"> 
+    <!-- It is Important to have styles.css before javascript so that script runs only when the css or styles have loaded -->
+</head>
+
+<!-- Inline Javascript is error prone and hard to debug so try to avoid
+onload is an event handler
+Above line is an example of Inline Java , In cases such as above where alert also requires " " and Hello also requires " ", then inner one should be used as '' -->
+
+<!-- <body onload = "alert('Hello');"> 
+    
+    <h1>Hello</h1>
+</body> -->
+
+
+<!-- Internal Javascript -->
+
+<!-- <body>
+    <h1>Hello</h1>
+    <script type = "text/javascript">
+     
+    //  In this case, it is set to "text/javascript" to indicate that the script is written in JavaScript
+     alert("Hello");
+    </script>
+</body> -->
+
+
+<!-- External JavaScript -->
+<body>
+    <h1 id="title">Hello</h1>
+    <input type="checkbox">
+    <button id = "myButton">click me</button>
+
+    <ul id="list">
+        <li class="item"><a href = "https://www.google.com">google</a></li>
+        <li class="item">second</li>
+        <li class="item">third</li>
+    </ul>
+    <script src="index.js" charset="utf-8">
+    </script>
+
+ 
+</body>
+</html>

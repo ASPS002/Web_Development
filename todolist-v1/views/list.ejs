@@ -1,0 +1,35 @@
+<%- include ("header"); -%>
+<body>
+    <!--scriplet tag, it needs to be added for each line that is not html -->
+    <!-- <%if(listTitle=="Saturday"||listTitle=="Sunday"){%> 
+    <h1 style="color:green"><%= listTitle %> ToDoList</h1>
+    <%} else {%>
+        <h1 style="color:purple"><%= listTitle %> ToDoList</h1>
+    <%}%> -->
+    <div class="box" id="heading">
+        <h1>
+            <%=listTitle%>
+        </h1>
+    </div>
+
+    <div class="box">
+
+        <%for(var i=0;i<newItems.length;i++){%>
+
+            <div class="item">
+                <input type="checkbox">
+                <p>
+                    <%=newItems[i]%>
+                </p>
+            </div>
+            <%}%>
+            <form class="item" action="/" method="post">
+                <input type="text" name="newItem" placeholder="newItem" autocomplete="off">
+                <button type="submit" name="list" value=<%= listTitle %>>+</button>
+            </form>
+    </div>
+   
+</body>
+
+<%- include ("footer");-%>
+

@@ -1,0 +1,116 @@
+html {
+  background-color: #E4E9FD;
+  background-image: -webkit-linear-gradient(65deg, #A683E3 50%, #E4E9FD 50%);
+  /* for making background with gradient */
+  min-height: 1000px;
+  font-family: 'helvetica neue';
+}
+
+h1 {
+  color: #fff;
+  padding: 10px;
+}
+
+.box {
+  max-width: 400px;
+  margin: 50px auto;
+  background: white;
+  border-radius: 5px;
+  box-shadow: 5px 5px 15px -5px rgba(0, 0, 0, 0.3);
+}
+/* The CSS code box-shadow: 5px 5px 15px -5px rgba(0, 0, 0, 0.3); applies a box shadow effect to an element.
+
+Let's break down the syntax:
+
+5px specifies the horizontal offset of the shadow.
+5px specifies the vertical offset of the shadow.
+15px specifies the blur radius of the shadow. It determines how blurry or spread out the shadow appears.
+-5px specifies the spread radius of the shadow. It determines how large the shadow is relative to the element's dimensions.
+rgba(0, 0, 0, 0.3) specifies the color and transparency of the shadow. In this case, it creates a shadow with black color (rgb(0, 0, 0)) and 30% opacity (0.3).
+This CSS code will add a subtle shadow to the element, positioned 5 pixels to the right and 5 pixels down from its original position, with a blur radius of 15 pixels 
+and a spread radius of -5 pixels. Adjust the values as needed to achieve the desired visual effect. */
+
+#heading {
+  background-color: #A683E3;
+  text-align: center;
+}
+
+
+
+
+
+
+
+/* Regenerate response */
+
+.item {
+  min-height: 70px;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #F1F1F1;
+}
+
+.item:last-child {
+  border-bottom: 0;
+}
+
+input:checked+p {
+  text-decoration: line-through;
+  text-decoration-color: #A683E3;
+}
+
+input[type="checkbox"] {
+  margin: 20px;
+}
+
+p {
+  margin: 0;
+  padding: 20px;
+  font-size: 20px;
+  font-weight: 200;
+  color: #00204a;
+}
+
+form {
+  text-align: center;
+  margin-left: 20px;
+}
+
+button {
+  min-height: 50px;
+  width: 50px;
+  border-radius: 50%;
+  border-color: transparent;
+  background-color: #A683E3;
+  color: #fff;
+  font-size: 30px;
+  padding-bottom: 6px;
+  border-width: 0;
+}
+
+input[type="text"] {
+  text-align: center;
+  height: 60px;
+  top: 10px;
+  border: none;
+  background: transparent;
+  font-size: 20px;
+  font-weight: 200;
+  width: 313px;
+}
+
+input[type="text"]:focus {
+  outline: none;
+  box-shadow: inset 0 -3px 0 0 #A683E3;
+}
+
+::placeholder {
+  color: grey;
+  opacity: 1;
+}
+
+footer {
+  color: white;
+  color: rgba(0, 0, 0, 0.5);
+  text-align: center;
+}

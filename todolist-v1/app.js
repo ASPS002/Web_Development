@@ -1,10 +1,16 @@
 
 const express = require('express');
 const bodyParser = require('body-parser');
+const getDate = require('./date');
 
 const app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public")); // express requires this to render static files
+
+const date = require(__dirname+"/date.js");// whatever is exported from the date module gets associated with date object
+
+console.log(date);
+// { getDate: [Function: getDate], getDay: [Function: getDay] }
 
 app.set('view engine', 'ejs');
 
@@ -12,19 +18,7 @@ var items = ["buy food", "cook food", "clean utensil", "sleep"];
 var workItems = [];
 app.get("/", function (req, res) {
 
-
-    var options = {
-
-        day: "numeric",
-        weekday: "long",
-        month: "long",
-        year: "numeric"
-
-    }
-    var today = new Date();
-    var day = today.toLocaleDateString("en-US", options);//passing options formats the date in a format specified in the options object;
-    res.render("list", { listTitle: day, newItems: items });
-
+    res.render("list", { listTitle: date.getDate(), newItems: items });
 
 });
 

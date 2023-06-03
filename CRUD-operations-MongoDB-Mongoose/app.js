@@ -156,6 +156,8 @@ const assert = require('assert');
 const mongoose = require('mongoose');
 
 mongoose.connect("mongodb://localhost:27017/sample_airbnb")//it will connect to local host having port 27017 and then search for sample_airbnb db and if it will not find one it will create one
+ 
+
 
 // Inserting
 const listingSchema = new mongoose.Schema({

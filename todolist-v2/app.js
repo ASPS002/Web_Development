@@ -15,7 +15,7 @@ app.use(express.static("public"));
 // const items = ["Buy Food", "Cook Food", "Eat Food"];
 // const workItems = [];
 
-mongoose.connect("mongodb://localhost:27017/todolistDB")//it will connect to local host having port 27017 and then search for sample_airbnb db and if it will not find one it will create one
+mongoose.connect("mongodb+srv://ujjwal:Test123@cluster0.k4le7pi.mongodb.net/todolistDB")//it will connect to local host having port 27017 and then search for sample_airbnb db and if it will not find one it will create one
 
 const itemsSchema = new mongoose.Schema({
 

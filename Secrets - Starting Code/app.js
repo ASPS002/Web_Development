@@ -1,5 +1,5 @@
 //jshint esversion:6
-
+require('dotenv').config();
 const express = require("express");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
@@ -21,9 +21,9 @@ const userSchema = new mongoose.Schema({
     password: String
 
 });
+// console.log(process.env.secret)
 
-const secret = "thisIsOurLittleSecret."
-userSchema.plugin(encrypt, { secret: secret, encryptedFields: ['password'] });// we are encrypting only password because we will need email to search for a user in our database laterOn when logging  
+userSchema.plugin(encrypt, { secret: process.env.secret, encryptedFields: ['password'] });// we are encrypting only password because we will need email to search for a user in our database laterOn when logging  
 
 
 const User = mongoose.model("User", userSchema);

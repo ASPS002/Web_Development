@@ -6,6 +6,8 @@ const mongoose = require("mongoose");
 const session = require('express-session');
 const passport = require("passport");
 const passportLocalMongoose = require("passport-local-mongoose");
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const findOrCreate = require('mongoose-findorcreate')
 // const encrypt = require("mongoose-encryption");
 
 // const md5 = require("md5");
@@ -19,7 +21,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
 app.use(session({
-    secret:process.env.secret ,
+    secret: process.env.secret,
     resave: false,
     saveUninitialized: false
 }));
@@ -33,11 +35,14 @@ mongoose.connect("mongodb://localhost:27017/userDB");
 const userSchema = new mongoose.Schema({
 
     email: String,
-    password: String
+    password: String,
+    googleId:String
 
 });
 
+
 userSchema.plugin(passportLocalMongoose); // used to hash and salt our password and save users in mongodb database
+userSchema.plugin(findOrCreate);
 // console.log(process.env.secret)
 
 // userSchema.plugin(encrypt, { secret: process.env.secret, encryptedFields: ['password'] });// we are encrypting only password because we will need email to search for a user in our database laterOn when logging  
@@ -47,14 +52,41 @@ const User = mongoose.model("User", userSchema);
 
 passport.use(User.createStrategy());
 
-passport.serializeUser(User.serializeUser());
-passport.deserializeUser(User.deserializeUser());
+// passport.serializeUser(User.serializeUser());
+// passport.deserializeUser(User.deserializeUser());
 // This line assumes that you have a User model defined in your application. The createStrategy() 
 // method is typically used when working with a username and password-based authentication strategy, such as local authentication.
 
 // . Serialization is the process of converting a user object into a format that can be stored in the session.
 
 // Deserialization is the process of converting the serialized user object stored in the session back into a user object that can be used in the application.
+
+
+passport.use(new GoogleStrategy({
+    clientID: process.env.CLIENT_ID,
+    clientSecret: process.env.CLIENT_SECRET,
+    callbackURL: "http://localhost:3000/auth/google/secrets",
+    scope: ['profile'],
+    state: true,
+},
+    function (accessToken, refreshToken, profile, cb) {
+        console.log(profile);
+        
+        User.findOrCreate({ googleId: profile.id }, function (err, user) {
+            return cb(err, user);
+        });
+    }
+));
+
+  // Used to stuff a piece of information into a cookie
+  passport.serializeUser((user, done) => {
+    done(null, user)
+})
+
+// Used to decode the received cookie and persist session
+passport.deserializeUser((user, done) => {
+    done(null, user)
+})
 
 app.get("/", function (req, res) {
 
@@ -222,6 +254,16 @@ app.post("/login", function (req, res) {
     // })
 
 });
+
+app.get("/auth/google/secrets",
+    passport.authenticate("google", { failureRedirect: "/register" }),
+    function (req, res) {
+        // Successful authentication, redirect home.
+        res.redirect("/secrets");
+    });
+
+app.get('/auth/google',
+    passport.authenticate("google", { scope: ["profile"] }));
 
 
 app.listen(3000, function () {

@@ -38,7 +38,8 @@ const userSchema = new mongoose.Schema({
     email: String,
     password: String,
     googleId: String,
-    facebookId: String
+    facebookId: String,
+    secret: String
 
 });
 
@@ -133,10 +134,60 @@ app.get("/secrets", function (req, res) {
     //   }
 
     if (req.isAuthenticated()) {
-        res.render("secrets");
+        User.find({ "secret": { $ne: null } }).then((foundUsers) => {
+
+            if (foundUsers) {
+                res.render("secrets", { foundUsers: foundUsers });//EJS
+            } else {
+                console.log("Users don't have any secrets");
+            }
+        }).catch((error) => {
+            console.log(error);
+        })
     } else {
         res.redirect("/login");
     }
+
+    // if (req.isAuthenticated()) {
+    //     res.render("secrets");
+    // } else {
+    //     res.redirect("/login");
+    // }
+});
+
+app.get("/submit", function (req, res) {
+
+    if (req.isAuthenticated()) {
+        res.render("submit");
+    } else {
+        res.redirect("/login");
+    }
+});
+
+app.post("/submit", function (req, res) {
+
+    const submittedSecret = req.body.secret;
+    console.log(req.user);// passport saves user's details into request object
+
+    User.findById(req.user._id).then((foundUser) => {
+
+        if (foundUser) {
+            foundUser.secret = submittedSecret;
+            foundUser.save().then((result) => {
+                res.redirect("/secrets");
+            }).catch((error) => {
+                console.log(error);
+            })
+        }
+        else {
+            console.log("User Not found and hence secret cannot be associated with the user");
+        }
+    }).catch((error) => {
+        console.log(error);
+    });
+
+
+
 });
 
 app.get("/logout", function (req, res) {

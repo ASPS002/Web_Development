@@ -8,6 +8,7 @@ const passport = require("passport");
 const passportLocalMongoose = require("passport-local-mongoose");
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const findOrCreate = require('mongoose-findorcreate')
+var FacebookStrategy = require('passport-facebook')
 // const encrypt = require("mongoose-encryption");
 
 // const md5 = require("md5");
@@ -36,7 +37,8 @@ const userSchema = new mongoose.Schema({
 
     email: String,
     password: String,
-    googleId:String
+    googleId: String,
+    facebookId: String
 
 });
 
@@ -71,15 +73,29 @@ passport.use(new GoogleStrategy({
 },
     function (accessToken, refreshToken, profile, cb) {
         console.log(profile);
-        
+
         User.findOrCreate({ googleId: profile.id }, function (err, user) {
             return cb(err, user);
         });
     }
 ));
 
-  // Used to stuff a piece of information into a cookie
-  passport.serializeUser((user, done) => {
+passport.use(new FacebookStrategy({
+    clientID: process.env.FACEBOOK_APP_ID,
+    clientSecret: process.env.FACEBOOK_APP_SECRET,
+    callbackURL: "http://localhost:3000/auth/facebook/secrets"
+},
+    function (accessToken, refreshToken, profile, cb) {
+        console.log(profile);
+        User.findOrCreate({ facebookId: profile.id }, function (err, user) {
+            return cb(err, user);
+        });
+    }
+));
+
+
+// Used to stuff a piece of information into a cookie
+passport.serializeUser((user, done) => {
     done(null, user)
 })
 
@@ -256,15 +272,25 @@ app.post("/login", function (req, res) {
 });
 
 app.get("/auth/google/secrets",
-    passport.authenticate("google", { failureRedirect: "/register" }),
+    passport.authenticate("google", { failureRedirect: "/login" }),
     function (req, res) {
         // Successful authentication, redirect home.
         res.redirect("/secrets");
     });
 
-app.get('/auth/google',
+app.get("/auth/google",
     passport.authenticate("google", { scope: ["profile"] }));
 
+app.get("/auth/facebook/secrets",
+    passport.authenticate("facebook", { failureRedirect: "/login" }),
+    function (req, res) {
+        // Successful authentication, redirect home.
+        res.redirect("/secrets");
+    });
+
+
+app.get("/auth/facebook",
+    passport.authenticate("facebook"));
 
 app.listen(3000, function () {
     console.log("Server started on port 3000");

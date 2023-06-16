@@ -12,6 +12,7 @@
   "dependencies": {
     "bcrypt": "^5.1.0",
     "body-parser": "^1.20.2",
+    "crypto": "^1.0.1",
     "dotenv": "^16.1.4",
     "ejs": "^3.1.9",
     "express": "^4.18.2",
@@ -20,6 +21,7 @@
     "mongoose": "^7.2.2",
     "mongoose-encryption": "^2.1.2",
     "mongoose-findorcreate": "^4.0.0",
+    "nodemailer": "^6.9.3",
     "passport": "^0.6.0",
     "passport-facebook": "^3.0.0",
     "passport-google-oauth20": "^2.0.0",

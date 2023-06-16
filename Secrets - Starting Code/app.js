@@ -9,6 +9,18 @@ const passportLocalMongoose = require("passport-local-mongoose");
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const findOrCreate = require('mongoose-findorcreate')
 var FacebookStrategy = require('passport-facebook')
+const nodemailer = require('nodemailer');
+const crypto = require('crypto');
+
+// const date = require(__dirname+"/date.js");// whatever is exported from the date module gets associated with date object
+
+
+// console.log(new Date());
+// const dates = [new Date(), new Date('August 19, 2021 23:15:30'),new Date('March 13, 2021 04:20')]
+// dates.sort((date1,date2)=>(date2-date1));
+// console.log(dates);
+
+// { getDate: [Function: getDate], getDay: [Function: getDay] }
 // const encrypt = require("mongoose-encryption");
 
 // const md5 = require("md5");
@@ -31,6 +43,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 
+
 mongoose.connect("mongodb://localhost:27017/userDB");
 
 const userSchema = new mongoose.Schema({
@@ -39,7 +52,10 @@ const userSchema = new mongoose.Schema({
     password: String,
     googleId: String,
     facebookId: String,
-    secret: String
+    secret: String,
+    isEmailVerified: Boolean,
+    verificationToken: String,
+    datePosted: Date
 
 });
 
@@ -53,8 +69,9 @@ userSchema.plugin(findOrCreate);
 
 const User = mongoose.model("User", userSchema);
 
-passport.use(User.createStrategy());
 
+
+passport.use(User.createStrategy());
 // passport.serializeUser(User.serializeUser());
 // passport.deserializeUser(User.deserializeUser());
 // This line assumes that you have a User model defined in your application. The createStrategy() 
@@ -64,19 +81,42 @@ passport.use(User.createStrategy());
 
 // Deserialization is the process of converting the serialized user object stored in the session back into a user object that can be used in the application.
 
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+    }
+});
+
+
+
+
+
 
 passport.use(new GoogleStrategy({
     clientID: process.env.CLIENT_ID,
     clientSecret: process.env.CLIENT_SECRET,
     callbackURL: "http://localhost:3000/auth/google/secrets",
-    scope: ['profile'],
+    scope: ["https://www.googleapis.com/auth/userinfo.email"],
     state: true,
 },
     function (accessToken, refreshToken, profile, cb) {
-        console.log(profile);
 
-        User.findOrCreate({ googleId: profile.id }, function (err, user) {
-            return cb(err, user);
+        User.findOrCreate({ username: profile.emails[0].value }, function (err, user) {
+            if (err) {
+                console.log(err);
+            } else {
+
+                // console.log(profile);
+                user.googleId = profile.id;
+                user.isEmailVerified = true;
+                user.save();
+                return cb(err, user);
+            }
         });
     }
 ));
@@ -84,11 +124,16 @@ passport.use(new GoogleStrategy({
 passport.use(new FacebookStrategy({
     clientID: process.env.FACEBOOK_APP_ID,
     clientSecret: process.env.FACEBOOK_APP_SECRET,
-    callbackURL: "http://localhost:3000/auth/facebook/secrets"
+    callbackURL: "http://localhost:3000/auth/facebook/secrets",
+    scope: ['email'],
+
 },
     function (accessToken, refreshToken, profile, cb) {
-        console.log(profile);
+
         User.findOrCreate({ facebookId: profile.id }, function (err, user) {
+
+            user.isEmailVerified = true;
+            user.save();
             return cb(err, user);
         });
     }
@@ -133,7 +178,7 @@ app.get("/secrets", function (req, res) {
     //     __v: 0
     //   }
 
-    if (req.isAuthenticated()) {
+    if (req.isAuthenticated() && req.user.isEmailVerified) {
         User.find({ "secret": { $ne: null } }).then((foundUsers) => {
 
             if (foundUsers) {
@@ -148,11 +193,6 @@ app.get("/secrets", function (req, res) {
         res.redirect("/login");
     }
 
-    // if (req.isAuthenticated()) {
-    //     res.render("secrets");
-    // } else {
-    //     res.redirect("/login");
-    // }
 });
 
 app.get("/submit", function (req, res) {
@@ -172,6 +212,7 @@ app.post("/submit", function (req, res) {
     User.findById(req.user._id).then((foundUser) => {
 
         if (foundUser) {
+            foundUser.datePosted = new Date();
             foundUser.secret = submittedSecret;
             foundUser.save().then((result) => {
                 res.redirect("/secrets");
@@ -206,22 +247,76 @@ app.get("/logout", function (req, res) {
 
 app.post("/register", function (req, res) {
 
+
+    //EMAIL VERIFICATION WITH PASSPORT LOCAL MONGOOSE
+
+    User.findOne({ username: req.body.username }).then((user) => {
+
+        if (user) {
+            res.send("<h1>The given username already exists!</h1>");
+        } else {
+            const verificationToken = crypto.randomBytes(32).toString('hex');
+            const verificationLink = `http://localhost:3000/verify/${verificationToken}`;
+            // console.log(req.body.username);
+            const mailOptions = {
+                from: process.env.EMAIL_USER,
+                to: req.body.username,
+                subject: 'Email Verification',
+                html: `Please click the following link to verify your email address: <a href="${verificationLink}">${verificationLink}</a>`
+            };
+
+            transporter.sendMail(mailOptions, (error, info) => {
+                if (error) {
+                    console.log('Error sending verification email:', error);
+                    // Handle error
+                } else {
+                    console.log('Verification email sent:', info.response);
+                    User.register({ username: req.body.username }, req.body.password, function (error, user) {
+                        if (error) {
+                            console.log(error);
+                            res.redirect("/register");
+                        }
+                        else {
+
+                            passport.authenticate("local")(req, res, function () {// if a user gets authenticated, it is automatically redirected to secrets page
+
+                                user.verificationToken = verificationToken;
+                                user.save();
+                                // console.log(user);
+                                // console.log("kjjkj");
+                                res.render("registration-successful");
+                            });
+                            // This middleware handles the authentication process, sets up the user object in the session, and triggers the callback 
+                            // function when authentication is complete.
+                        }
+                    });
+                    // Handle success
+                }
+            });
+        }
+
+    }).catch((error) => {
+
+        console.log(error);
+    });
+
+
     //PASSPORT LOCAL MONGOOSE
 
-    User.register({ username: req.body.username }, req.body.password, function (error, user) {
-        if (error) {
-            console.log(error);
-            res.redirect("/register");
-        }
-        else {
+    // User.register({ username: req.body.username }, req.body.password, function (error, user) {
+    //     if (error) {
+    //         console.log(error);
+    //         res.redirect("/register");
+    //     }
+    //     else {
 
-            passport.authenticate("local")(req, res, function () {// if a user gets authenticated, it is automatically redirected to secrets page
-                res.redirect("/secrets");
-            });
-            // This middleware handles the authentication process, sets up the user object in the session, and triggers the callback 
-            // function when authentication is complete.
-        }
-    });
+    //         passport.authenticate("local")(req, res, function () {// if a user gets authenticated, it is automatically redirected to secrets page
+    //             res.redirect("/secrets");
+    //         });
+    //         // This middleware handles the authentication process, sets up the user object in the session, and triggers the callback 
+    //         // function when authentication is complete.
+    //     }
+    // });
 
 
 
@@ -269,7 +364,6 @@ app.post("/login", function (req, res) {
         username: req.body.username,
         password: req.body.password
     });
-
 
     req.login(user, function (error) {
         if (error) {
@@ -325,12 +419,14 @@ app.post("/login", function (req, res) {
 app.get("/auth/google/secrets",
     passport.authenticate("google", { failureRedirect: "/login" }),
     function (req, res) {
+        // console.log(req.user);
+
         // Successful authentication, redirect home.
         res.redirect("/secrets");
     });
 
 app.get("/auth/google",
-    passport.authenticate("google", { scope: ["profile"] }));
+    passport.authenticate("google", { scope: ["https://www.googleapis.com/auth/userinfo.email"] }));
 
 app.get("/auth/facebook/secrets",
     passport.authenticate("facebook", { failureRedirect: "/login" }),
@@ -345,4 +441,29 @@ app.get("/auth/facebook",
 
 app.listen(3000, function () {
     console.log("Server started on port 3000");
+});
+
+
+app.get('/verify/:token', (req, res) => {
+    const { token } = req.params;
+
+    // Validate the token against the generated token in your database
+    // console.log(token);
+
+    User.findOne({ username: req.user.username }).then((userFound) => {
+        if (userFound) {
+
+            if (token === userFound.verificationToken) {
+                userFound.isEmailVerified = true;
+                userFound.save();
+                res.redirect("/login");
+            } else {
+                res.send('Invalid verification token!');
+            }
+        }
+    }).catch(error => {
+        console.log("Unable to verify email " + error);
+    })
+
+
 });
